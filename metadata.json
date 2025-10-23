@@ -1,0 +1,5 @@
+{
+  "name": "Quantum Leap Interactive Simulator",
+  "description": "An interactive web-based simulation of a quantum physics experiment. Explore quantum leaps, test your knowledge with a quiz, and enjoy a mesmerizing star simulation, all inspired by an original Arduino project.",
+  "requestFramePermissions": []
+}
