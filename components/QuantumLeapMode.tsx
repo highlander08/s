@@ -44,8 +44,21 @@ const QuantumLeapMode = () => {
   const lastAbsorptionTime = useRef<number | null>(null);
   const animationFrameId = useRef<number>();
 
+  // const handleShootPhoton = () => {
+  //   if (!isPhotonMoving) {
+  //     setPhotonY(SIMULATION_HEIGHT - 20);
+  //     setIsPhotonMoving(true);
+  //   }
+  // };
+
   const handleShootPhoton = () => {
     if (!isPhotonMoving) {
+      // 🔫 Som de disparo
+      const somTiro = new Audio("/tiro.mp3");
+      somTiro.volume = 0.7; // volume opcional (0 a 1)
+      somTiro.play();
+
+      // 🚀 Movimento do fóton
       setPhotonY(SIMULATION_HEIGHT - 20);
       setIsPhotonMoving(true);
     }
