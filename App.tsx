@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import backgroundMusic from "./public/batalha.mp3"; // coloque seu som aqui
 import { Mode } from "./types";
 import QuantumLeapMode from "./components/QuantumLeapMode";
@@ -45,6 +45,11 @@ const App = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
 
+  // Estados para "sinalizar" aos componentes filhos que uma tecla foi pressionada
+  const [photonTrigger, setPhotonTrigger] = useState(0);
+  const [speedAdjustment, setSpeedAdjustment] = useState(0);
+  const [shootTrigger, setShootTrigger] = useState(0);
+
   useEffect(() => {
     const audio = audioRef.current!;
     audio.volume = 0.5;
@@ -62,16 +67,54 @@ const App = () => {
       });
   }, []);
 
-  const toggleAudio = () => {
+  const toggleAudio = useCallback(() => {
     const audio = audioRef.current!;
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
     } else {
-      audio.play().catch(() => setAutoplayBlocked(true));
-      setIsPlaying(true);
+      audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setAutoplayBlocked(true));
     }
-  };
+  }, [isPlaying]);
+
+  // Hook para lidar com os atalhos do teclado
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Atalho global para ligar/desligar o som
+      if (event.key.toLowerCase() === "s") {
+        event.preventDefault();
+        toggleAudio();
+      }
+
+      // Só executa os atalhos se estiver no modo QuantumLeap
+      if (currentMode !== Mode.QuantumLeap) return;
+
+      if (event.key === "Alt") {
+        event.preventDefault(); // Previne o comportamento padrão do Alt
+        setPhotonTrigger((prev) => prev + 1); // Incrementa para "sinalizar" a mudança
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        setSpeedAdjustment((prev) => prev + 1); // Sinaliza aumento de velocidade
+      } else if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        setSpeedAdjustment((prev) => prev - 1); // Sinaliza diminuição de velocidade
+      } else if (event.key === " ") {
+        // A tecla de espaço é representada por " "
+        event.preventDefault();
+        setShootTrigger((prev) => prev + 1); // Sinaliza o disparo do fóton
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Função de limpeza para remover o "ouvinte" quando o componente desmontar
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [currentMode, toggleAudio]); // Roda o efeito novamente se o modo ou a função de áudio mudar
 
   const handleDisparo = () => {
     const somTiro = new Audio("/sounds/tiro.mp3");
@@ -97,7 +140,11 @@ const App = () => {
 
       <main className="flex-1 flex flex-col items-center justify-center p-4 pt-20 md:pt-4">
         <div className="w-full h-full max-w-2xl max-h-[600px] bg-quantum-dark/50 rounded-2xl shadow-lg relative">
-          <ActiveComponent />
+          <ActiveComponent
+            photonTrigger={photonTrigger}
+            speedAdjustment={speedAdjustment}
+            shootTrigger={shootTrigger}
+          />
         </div>
       </main>
 

@@ -30,7 +30,18 @@ const ControlButton: React.FC<{
   </button>
 );
 
-const QuantumLeapMode = () => {
+// 1. Definimos a interface para as props que o componente receberá do App.tsx
+interface QuantumLeapModeProps {
+  photonTrigger: number;
+  speedAdjustment: number;
+  shootTrigger: number;
+}
+
+const QuantumLeapMode: React.FC<QuantumLeapModeProps> = ({
+  photonTrigger,
+  speedAdjustment,
+  shootTrigger,
+}) => {
   const [atomLevel, setAtomLevel] = useState(1);
   const [photonColorIndex, setPhotonColorIndex] = useState(0);
   const [isPhotonMoving, setIsPhotonMoving] = useState(false);
@@ -42,6 +53,7 @@ const QuantumLeapMode = () => {
   const [electronSpeed, setElectronSpeed] = useState(0.02);
 
   const lastAbsorptionTime = useRef<number | null>(null);
+  const lastSpeedAdjustment = useRef(0);
   const animationFrameId = useRef<number>();
 
   // const handleShootPhoton = () => {
@@ -51,7 +63,7 @@ const QuantumLeapMode = () => {
   //   }
   // };
 
-  const handleShootPhoton = () => {
+  const handleShootPhoton = useCallback(() => {
     if (!isPhotonMoving) {
       // 🔫 Som de disparo
       const somTiro = new Audio("/tiro.mp3");
@@ -62,14 +74,44 @@ const QuantumLeapMode = () => {
       setPhotonY(SIMULATION_HEIGHT - 20);
       setIsPhotonMoving(true);
     }
-  };
+  }, [isPhotonMoving]);
 
-  const handleChangePhoton = () => {
+  const handleChangePhoton = useCallback(() => {
     setPhotonColorIndex((prev) => (prev + 1) % PHOTON_COLORS.length);
-  };
+  }, []);
 
   const increaseSpeed = () => setElectronSpeed((s) => Math.min(0.1, s + 0.01));
   const decreaseSpeed = () => setElectronSpeed((s) => Math.max(0.01, s - 0.01));
+
+  // 2. useEffect para reagir ao atalho da tecla 'Alt'
+  useEffect(() => {
+    // Evita a execução na primeira renderização
+    if (photonTrigger > 0) {
+      handleChangePhoton();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photonTrigger]);
+
+  // 3. useEffect para reagir aos atalhos das setas de velocidade
+  useEffect(() => {
+    const currentAdjustment = speedAdjustment;
+    if (currentAdjustment > lastSpeedAdjustment.current) {
+      increaseSpeed();
+    } else if (currentAdjustment < lastSpeedAdjustment.current) {
+      decreaseSpeed();
+    }
+    lastSpeedAdjustment.current = currentAdjustment;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speedAdjustment]);
+
+  // 4. useEffect para reagir ao atalho da tecla 'T' para disparar
+  useEffect(() => {
+    // Evita a execução na primeira renderização
+    if (shootTrigger > 0) {
+      handleShootPhoton();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shootTrigger]);
 
   const animate = useCallback(() => {
     // Electron orbit
